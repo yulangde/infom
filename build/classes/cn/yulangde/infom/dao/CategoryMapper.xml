@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.yulangde.infom.dao.CategoryMapper" >
+  <resultMap id="BaseResultMap" type="Category" >
+    <id column="ID" property="id"/>
+    <result column="CODE" property="code"/>
+    <result column="NAME" property="name"/>
+  </resultMap>
+ 
+  <select id="selectAll" resultType="Category">
+    select * from TBL_CATEGORY
+  </select>
+
+  <select id="selectByPrimaryKey" resultType="Category">
+    select * from TBL_CATEGORY where ID = #{id}
+  </select>
+  <select id="selectByName" resultType="Category">
+    select * from TBL_CATEGORY where name = #{name}
+  </select>
+  <select id="selectByCode" resultType="Category">
+    select * from TBL_CATEGORY where code = #{code}
+  </select>
+  <!-- 准备用做级联查询 -->
+  <select id="selectAllNews" resultMap="BaseResultMap">
+    select * from TBL_CATEGORY where code = #{code}
+  </select>
+  <delete id="deleteByPrimaryKey">
+    delete from TBL_CATEGORY where ID = #{id}
+  </delete>
+  
+  <insert id="insert" parameterType="Category" >
+  	<selectKey resultType="Long" keyProperty="id" order="BEFORE">
+			select cms_seq.nextval from dual
+	</selectKey>
+    insert into TBL_CATEGORY (ID, CODE, NAME)
+    values (#{id}, #{code}, #{name})
+  </insert>
+
+  <update id="updateByPrimaryKey" parameterType="Category" >
+    update TBL_CATEGORY set CODE = #{code},NAME = #{name} where ID = #{id}
+  </update>
+</mapper>

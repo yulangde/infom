@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+
+	<mvc:resources mapping="/js/**" location="/WEB-INF/jsp/js/"/> 
+	<mvc:resources mapping="/theme/**" location="/WEB-INF/jsp/theme/"/>
+	<mvc:default-servlet-handler/>
+
+<!-- 用到了组件  注解需要配置 -->
+<context:component-scan base-package="cn.yulangde"></context:component-scan>
+<!-- 用到了MVC的注解 -->
+<mvc:annotation-driven/>
+
+<!-- 配置视图解析器 -->
+<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"></property>
+	<property name="prefix" value="/WEB-INF/jsp/"></property>
+	<property name="suffix" value=".jsp"></property>
+</bean>
+
+<!-- 第一步：配置数据源 -->
+<context:property-placeholder location="classpath:db.properties"/>
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName">
+			<value>${driver}</value>
+		</property>
+		<property name="url">
+			<value>${url}</value>
+		</property>
+		<property name="username">
+			<value>${use}</value>
+		</property>
+		<property name="password">
+			<value>${password}</value>
+		</property>
+		<!-- 最大连接数 -->
+		<property name="maxActive">
+			<value>80</value>
+		</property>
+		<!-- 最大空闲连接数 -->
+		<property name="maxIdle">
+			<value>20</value>
+		</property>
+		<!-- 最大等待时间:当没有可用连接时,连接池等待连接被归还的最大时间 单位:毫秒 -->
+		<!-- 超过时间则抛出异常,如果设置为-1表示无限等待 -->
+		<property name="maxWait">
+			<value>3000</value>
+		</property>
+	</bean>
+
+<!-- 得到sessionFactory对象 -->
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean ">
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.yulangde.infom.dao"></property>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+
+<!-- 第三步：事务   处理提交回滚事物 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+<!-- 配置通知 -->
+	<tx:advice id="MyAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 配置拦截service -->
+ 	<aop:config>
+		<aop:advisor advice-ref="MyAdvice" pointcut="execution(* cn.yulangde.infom.service.*.*(..))"/>
+	</aop:config>
+</beans>
